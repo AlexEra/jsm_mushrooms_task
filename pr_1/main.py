@@ -1,7 +1,7 @@
 def write_to_file(data, file_name):
     with open(file_name, 'w') as f:
         for i in data:
-            f.writelines(str(i) + '\n')
+            f.writelines(str(i) + ' ' + str(data[i]) + '\n')
 
 
 def extract_data() -> list:
@@ -39,25 +39,32 @@ def intersect(a_1: str, a_2: str) -> (str, bool):
     return tmp, flag
 
 
-def intersection(dct: dict, key_0: str, key_1: str) -> (dict, bool):
-    res, flg = intersect(key_0, key_1)
-    if not flg:
-        return {}, flg
+def intersection(prnts_0: list, prnts_1: list, key_0: str, key_1: str) -> (str, list, bool):
+    res, f = intersect(key_0, key_1)
+    if not f:
+        return {}, [], f
     else:
-        return {res: dct[key_0] + dct[key_1]}, flg
+        return res, prnts_0 + prnts_1, f
 
 
-def check_hypothesis(hypotheses: dict, hyp_to_check: dict) -> dict:
-    # TODO: проверка эквивалетности гипотез
-    # TODO: нужно сравнить с гипотезами выше, к множеству родителей добавляется новый родитель, если есть похожие
-    # была ли ранее гипотеза? Если была, то добавляем 1 к родителям, если нет, то добавляем к гипотезам
-    # ВАЖНО! Списки с номерами родителей нужно предварительно отсортировать!
-    pass
+def check_hypothesis(hypo_s: dict, hyp_to_check: str, hyp_parents: list) -> dict:
+    """
+    Проверка эквивалетности гипотез
+    К множеству родителей добавляется новый родитель, если есть похожие
+    была ли ранее гипотеза? Если была, то добавляем 1 к родителям, если нет, то добавляем к гипотезам
+    """
+    tmp = hypo_s.copy()
+    for h in tmp:
+        parents = tmp.get(h)
+        if h == hyp_to_check:
+            hypo_s[h] = parents + hyp_parents
+        else:
+            hypo_s[hyp_to_check] = hyp_parents
+    return hypo_s
 
 
-# Алгоритм "каждый с каждым"
 if __name__ == '__main__':
-    #  TODO: К следующему разу получить пересечение первых 10 пересечений
+    #  TODO: К следующему разу получить пересечение первых 10 примеров
     from_file = extract_data()
     poisonous, edible, list_p, list_e = form_dictionaries(from_file)
     """
@@ -65,4 +72,17 @@ if __name__ == '__main__':
     print(f'amount of poisonous mushrooms: {len(poisonous)}')
     """
     del from_file
-    print(intersection(poisonous, list_p[0], list_p[1]))
+
+    hypotheses = dict()
+    res_str, res_parents, flg = intersection(poisonous[list_p[0]], poisonous[list_p[1]],
+                                             list_p[0], list_p[1])
+    if flg:
+        hypotheses[res_str] = res_parents
+
+    # TODO: нужна проверка новой гипотезы, полученной при пересечении предыдущей гипотезы и следующего примера
+    for i in range(1, 9):
+        res_str, res_parents, flg = intersection(poisonous[list_p[i]], poisonous[list_p[i+1]],
+                                                 list_p[i], list_p[i+1])
+        if flg:
+            hypotheses = check_hypothesis(hypotheses, res_str, res_parents)
+    write_to_file(hypotheses, 'res.txt')
