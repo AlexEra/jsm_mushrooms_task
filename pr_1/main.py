@@ -47,6 +47,14 @@ def intersection(prnts_0: list, prnts_1: list, key_0: str, key_1: str) -> (str, 
         return res, prnts_0 + prnts_1, f
 
 
+def sum_of_parents(p_0, p_1):
+    for p in p_1:
+        if p not in p_0:
+            p_0 += [p]
+    p_0.sort()
+    return p_0
+
+
 def check_hypothesis(hypo_s: dict, hyp_to_check: str, hyp_parents: list) -> dict:
     """
     Проверка эквивалетности гипотез
@@ -54,12 +62,16 @@ def check_hypothesis(hypo_s: dict, hyp_to_check: str, hyp_parents: list) -> dict
     была ли ранее гипотеза? Если была, то добавляем 1 к родителям, если нет, то добавляем к гипотезам
     """
     tmp = hypo_s.copy()
-    for h in tmp:
-        parents = tmp.get(h)
-        if h == hyp_to_check:
-            hypo_s[h] = parents + hyp_parents
-        else:
-            hypo_s[hyp_to_check] = hyp_parents
+    if tmp == {}:
+        hypo_s[hyp_to_check] = hyp_parents
+    else:
+        for h in tmp:
+            parents = tmp.get(h)
+            if h == hyp_to_check:
+                # hypo_s[h] = parents + hyp_parents
+                hypo_s[h] = sum_of_parents(parents, hyp_parents)
+            else:
+                hypo_s[hyp_to_check] = hyp_parents
     return hypo_s
 
 
@@ -74,15 +86,14 @@ if __name__ == '__main__':
     del from_file
 
     hypotheses = dict()
-    res_str, res_parents, flg = intersection(poisonous[list_p[0]], poisonous[list_p[1]],
-                                             list_p[0], list_p[1])
-    if flg:
-        hypotheses[res_str] = res_parents
-
     # TODO: нужна проверка новой гипотезы, полученной при пересечении предыдущей гипотезы и следующего примера
     for i in range(1, 9):
-        res_str, res_parents, flg = intersection(poisonous[list_p[i]], poisonous[list_p[i+1]],
-                                                 list_p[i], list_p[i+1])
+        res_str, res_parents, flg = intersection(poisonous[list_p[0]], poisonous[list_p[i]],
+                                                 list_p[0], list_p[i])
         if flg:
             hypotheses = check_hypothesis(hypotheses, res_str, res_parents)
+            res_str, res_parents, flg = intersection(hypotheses[res_str], poisonous[list_p[i+1]],
+                                                     res_str, list_p[i+1])
+            if flg:
+                hypotheses = check_hypothesis(hypotheses, res_str, res_parents)
     write_to_file(hypotheses, 'res.txt')
