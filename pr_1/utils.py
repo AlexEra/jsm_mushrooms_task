@@ -1,4 +1,4 @@
-def write_to_file(data, file_name):
+def write_to_file(data: (list, tuple, dict), file_name: str) -> None:
     with open(file_name, 'w') as f:
         for i in data:
             f.writelines(str(i) + ' ' + str(data[i]) + '\n')
@@ -44,15 +44,17 @@ def intersection(prnts_0: list, prnts_1: list, key_0: str, key_1: str) -> (str, 
     if not f:
         return {}, [], f
     else:
-        return res, prnts_0 + prnts_1, f
+        s_p = sum_of_parents(prnts_0, prnts_1)
+        return res, s_p, f
 
 
-def sum_of_parents(p_0, p_1):
+def sum_of_parents(p_0: list, p_1: list) -> list:
+    parents_res = p_0.copy()
     for p in p_1:
-        if p not in p_0:
-            p_0 += [p]
-    p_0.sort()
-    return p_0
+        if p not in parents_res:
+            parents_res.append(p)
+    parents_res.sort()
+    return parents_res
 
 
 def check_hypothesis(hypo_s: dict, hyp_to_check: str, hyp_parents: list) -> dict:
@@ -65,11 +67,29 @@ def check_hypothesis(hypo_s: dict, hyp_to_check: str, hyp_parents: list) -> dict
     if tmp == {}:
         hypo_s[hyp_to_check] = hyp_parents
     else:
-        for h in tmp:
-            parents = tmp.get(h)
-            if h == hyp_to_check:
-                # hypo_s[h] = parents + hyp_parents
-                hypo_s[h] = sum_of_parents(parents, hyp_parents)
-            else:
-                hypo_s[hyp_to_check] = hyp_parents
+        if hyp_to_check in tmp:
+            hypo_s[hyp_to_check] = sum_of_parents(tmp.get(hyp_to_check), hyp_parents)
+        else:
+            hypo_s[hyp_to_check] = hyp_parents
     return hypo_s
+
+
+def intersection_with_checking(pr_0: list, pr_1: list, str_0: str, str_1: str, hs: dict) -> dict:
+    rs, parents, _ = intersection(pr_0, pr_1, str_0, str_1)
+    hs = check_hypothesis(hs, rs, parents)
+    return hs
+
+
+def iterator(str_chck: str, lst_par: list, obj_iter: dict, hpts: dict, lim_for_iterations=-1) -> dict:
+    if lim_for_iterations == -1:
+        for obj_str in obj_iter:
+            hpts = intersection_with_checking(obj_iter[obj_str], lst_par, obj_str, str_chck, hpts)
+        return hpts
+    elif lim_for_iterations > 0:
+        count = 0
+        for obj_str in obj_iter:
+            hpts = intersection_with_checking(obj_iter[obj_str], lst_par, obj_str, str_chck, hpts)
+            count += 1
+            if count > lim_for_iterations:
+                break
+        return hpts
