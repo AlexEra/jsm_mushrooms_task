@@ -59,48 +59,52 @@ def partial_nesting(str_0, str_1):
 def sum_of_parents(p_0: list, p_1: list) -> list:
     parents_res = p_0.copy()
     for p in p_1:
-        if p not in parents_res:
+        if p not in p_0:
             parents_res.append(p)
     parents_res.sort()
     return parents_res
 
 
 def add_h(example: list, hpts: list, u_set: list) -> list:
-    break_flg = False
     intersect_flg = False
     z, parents_of_z = '', list()
     for y in hpts:
         if partial_nesting(example[0], y[0]):
             hpts[hpts.index(y)][1] = sum_of_parents(y[1], example[1])
         else:
+            break_flg = False
             z, parents_of_z, intersect_flg = intersect(y, example)
+            
+            """ проверка на относительную каноничность """
             for v in u_set[0:u_set.index(example)]:
-                flg = v_is_parent_of_y(v[1], y[1])
-                if flg:
+                if v_is_parent_of_y(v[1], y[1]):  # если v является родителем y
                     break_flg = True
                     break
                 else:
-                    if partial_nesting(z, v[0]):  # is_z_in_v
+                    if partial_nesting(z, v[0]):  # если z вкладывается в v
                         break_flg = True
                         break
-    if not break_flg:
-        if intersect_flg:
-            hpts.append([z, parents_of_z])  # merge_hpts_with_z
+            if not break_flg:
+                if intersect_flg:
+                    hpts.append([z, parents_of_z])  # merge_hpts_with_z
 
-    break_flg = False
+    """ проверка на асболютную каноничность """
     for v in u_set[0:u_set.index(example)]:
         if partial_nesting(example[0], v[0]):  # is_x_in_v
-            break_flg = True
-            break
-    if not break_flg:
-        hpts.append(example)  # merge_hpts_with_x
+            return hpts
+
+    """ если соблюдается абс. каноничность, то добавить пример ко множеству гипотез """
+    hpts.append(example)
     return hpts
 
 
 if __name__ == '__main__':
+    """ извлечение примеров из файла """
     poisonous, edible = extract_data()
 
-    hypotheses = list()
-    for x in poisonous[0:100]:
-        hypotheses = add_h(x, hypotheses, poisonous[0:100])
-    write_to_file(hypotheses, 'res')
+    hypotheses_n = list()
+    
+    """ основной цикл по (-)-примерам """
+    for x in poisonous[0:10]:
+        hypotheses_n = add_h(x.copy(), hypotheses_n, poisonous[0:10])
+    write_to_file(hypotheses_n, 'res')
