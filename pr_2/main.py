@@ -66,8 +66,6 @@ def sum_of_parents(p_0: list, p_1: list) -> list:
 
 
 def add_h(example: list, hpts: list, u_set: list) -> list:
-    intersect_flg = False
-    z, parents_of_z = '', list()
     for y in hpts:
         if partial_nesting(example[0], y[0]):
             hpts[hpts.index(y)][1] = sum_of_parents(y[1], example[1])
