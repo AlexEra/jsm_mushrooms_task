@@ -25,7 +25,7 @@ def intersect(list_0: list, list_1: list) -> (str, list, bool):
     tmp = ''
     flag = False
     for i, j in zip(list_0[0], list_1[0]):
-        if i == j and i != '0' and j != '0':
+        if i == j and i != '0' and j != '0' and i != '?' and j != '?':
             tmp += i
             flag = True
         else:
@@ -38,22 +38,31 @@ def intersect(list_0: list, list_1: list) -> (str, list, bool):
     return tmp, parents, flag
 
 
-def v_is_parent_of_y(lst_0, lst_1):
+def v_is_parent_of_y(lst_0, lst_1, idx_0, idx_1):
     parent_flg = False
-    for i in lst_0:
-        if i in lst_1:
-            parent_flg = True
-            break
+    if idx_0 != idx_1:
+        for i in lst_0:
+            if i in lst_1:
+                parent_flg = True
+                break
     return parent_flg
 
 
-def partial_nesting(str_0, str_1):
-    flg = False
-    for i, j in zip(str_0, str_1):
-        if i == j and i != 0 and j != 0:
-            flg = True
-            break
-    return flg
+def nesting(str_0, str_1):
+    """
+    Проверка вложения - если объект 2 вкладывается в 1, то в нем д.б. все непустые поля (признаки)
+    объекта 2
+    Нужно пройти по всем объекту
+    Или пересечение и сравнение, равен ли результат объекту 2
+    :param str_0:
+    :param str_1:
+    :return:
+    """
+    for i in range(len(str_1)):
+        if str_1[i] != '0' and str_1[i] != '?':
+            if str_1[i] != str_0[i]:
+                return False
+    return True
 
 
 def sum_of_parents(p_0: list, p_1: list) -> list:
@@ -67,19 +76,19 @@ def sum_of_parents(p_0: list, p_1: list) -> list:
 
 def add_h(example: list, hpts: list, u_set: list) -> list:
     for y in hpts:
-        if partial_nesting(example[0], y[0]):
+        if nesting(y[0], example[0]):  # если пример вкладывается в гипотезу
             hpts[hpts.index(y)][1] = sum_of_parents(y[1], example[1])
         else:
             break_flg = False
             z, parents_of_z, intersect_flg = intersect(y, example)
-            
+
             """ проверка на относительную каноничность """
             for v in u_set[0:u_set.index(example)]:
-                if v_is_parent_of_y(v[1], y[1]):  # если v является родителем y
+                if v_is_parent_of_y(v[1], y[1], u_set.index(v), hpts.index(y)):  # если v является родителем y
                     break_flg = True
                     break
                 else:
-                    if partial_nesting(z, v[0]):  # если z вкладывается в v
+                    if nesting(v[0], z):  # если z вкладывается в v
                         break_flg = True
                         break
             if not break_flg:
@@ -87,8 +96,8 @@ def add_h(example: list, hpts: list, u_set: list) -> list:
                     hpts.append([z, parents_of_z])  # merge_hpts_with_z
 
     """ проверка на асболютную каноничность """
-    for v in u_set[0:u_set.index(example)]:
-        if partial_nesting(example[0], v[0]):  # is_x_in_v
+    for v in u_set[0:u_set.index(example)]:  # TODO: уточнить, проверка ниже проваливается всегда
+        if nesting(v[0], example[0]):  # если пример вкладывается хотя бы в один из предыдущих примеров
             return hpts
 
     """ если соблюдается абс. каноничность, то добавить пример ко множеству гипотез """
@@ -101,8 +110,9 @@ if __name__ == '__main__':
     poisonous, edible = extract_data()
 
     hypotheses_n = list()
-    
+
     """ основной цикл по (-)-примерам """
-    for x in poisonous[0:10]:
-        hypotheses_n = add_h(x.copy(), hypotheses_n, poisonous[0:10])
+    right_lim = 10
+    for x in poisonous[0:right_lim]:
+        hypotheses_n = add_h(x.copy(), hypotheses_n, poisonous[0:right_lim])
     write_to_file(hypotheses_n, 'res')
