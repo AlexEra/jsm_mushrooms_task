@@ -25,8 +25,7 @@ def intersect(list_0: list, list_1: list) -> (str, list, bool):
     tmp = ''
     flag = False
     for i, j in zip(list_0[0], list_1[0]):
-        # if i == j and i != '0' and j != '0' and i != '?' and j != '?':
-        if i == j:
+        if i == j and i != '0' and j != '0' and i != '?' and j != '?':
             tmp += i
             flag = True
         else:
@@ -76,8 +75,8 @@ def sum_of_parents(p_0: list, p_1: list) -> list:
 
 
 def add_h(example: list, ex_idx: int, hpts: list, u_set: list) -> list:
-    hp = hpts.copy()
-    for y in hp:
+    # TODO: check the logic of this program with debugger
+    for y in hpts:
         if nesting(example[0], y[0]):  # если гипотеза вкладывается в пример
             hpts[hpts.index(y)][1] = sum_of_parents(y[1], example[1])
         else:
@@ -85,27 +84,30 @@ def add_h(example: list, ex_idx: int, hpts: list, u_set: list) -> list:
             z, parents_of_z, intersect_flg = intersect(y, example)
 
             """ проверка на относительную каноничность """
-            count = 0
-            while count < ex_idx:
-                v = u_set[count]
-                # если v является родителем y ИЛИ z вкладывается в v
-                if count != 0 and hpts.index(y) != 0:
-                    if v[1][0] in y[1] or nesting(v[0], z):
-                        break_flg = True
-                        break
-                count += 1
+            # for v in u_set[0:u_set.index(example)]:
+            # for v in u_set[0:u_set.index(example):-1]:
+            # for v in range(ex_idx)[::-1]:
+            v = ex_idx - 1
+            while v >= 0:
+                # if v[1][0] in y[1] or nesting(v[0], z):  # если v является родителем y ИЛИ z вкладывается в v
+                if u_set[v][1][0] in y[1] or nesting(u_set[v][0], z):
+                    break_flg = True
+                    break
+                v -= 1
             if not break_flg:
                 if intersect_flg:
                     hpts.append([z, parents_of_z])  # merge_hpts_with_z
 
     """ проверка на асболютную каноничность """
-    count = 0
-    while count < ex_idx:
-        v = u_set[count][0]
-        # если пример вкладывается хотя бы в один из предыдущих примеров
-        if nesting(v, example[0]):
+    # for v in u_set[0:u_set.index(example)]:
+    # for v in u_set[0:u_set.index(example):-1]:
+    # for v in range(ex_idx)[::-1]:
+    v = ex_idx - 1
+    while v >= 0:
+        #     if nesting(v[0], example[0]):  # если пример вкладывается хотя бы в один из предыдущих примеров
+        if nesting(u_set[v][0], example[0]):
             return hpts
-        count += 1
+        v -= 1
 
     """ если соблюдается абс. каноничность, то добавить пример ко множеству гипотез """
     hpts.append(example)
@@ -119,7 +121,7 @@ if __name__ == '__main__':
     hypotheses_n = list()
 
     """ основной цикл по (-)-примерам """
-    right_lim = 3
+    right_lim = 10
     for x in poisonous[0:right_lim]:
         hypotheses_n = add_h(x.copy(), poisonous.index(x), hypotheses_n, poisonous[0:right_lim])
     write_to_file(hypotheses_n, 'res')
