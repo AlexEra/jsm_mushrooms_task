@@ -1,3 +1,6 @@
+import time
+
+
 def write_to_file(data: list, file_name: str) -> None:
     with open(file_name, 'w') as f:
         for i in data:
@@ -75,51 +78,57 @@ def sum_of_parents(p_0: list, p_1: list) -> list:
     return parents_res
 
 
-def add_h(example: list, ex_idx: int, hpts: list, u_set: list) -> list:
-    hp = hpts.copy()
-    for y in hp:
-        if nesting(example[0], y[0]):  # если гипотеза вкладывается в пример
-            hpts[hpts.index(y)][1] = sum_of_parents(y[1], example[1])
+def add_h() -> int:
+    x_idx = u_set.index(x)
+    hpts_len = len(hypotheses_p)
+    for y in hypotheses_p[0:hpts_len]:
+        if nesting(x[0], y[0]):  # если гипотеза вкладывается в пример
+            hypotheses_p[hypotheses_p.index(y)][1] = sum_of_parents(y[1], x[1])
         else:
             break_flg = False
-            z, parents_of_z, intersect_flg = intersect(y, example)
+            z, parents_of_z, intersect_flg = intersect(y, x)
 
             """ проверка на относительную каноничность """
-            count = 0
-            while count < ex_idx:
-                v = u_set[count]
-                # если v является родителем y ИЛИ z вкладывается в v
-                if count != 0 and hpts.index(y) != 0:
+            if intersect_flg:
+                count = 0
+                while count < x_idx:
+                    v = u_set[count]
+                    # если v является родителем y ИЛИ z вкладывается в v
+                    if count == 0 and hypotheses_p.index(y) == 0:
+                        count += 1
+                        continue
                     if v[1][0] in y[1] or nesting(v[0], z):
                         break_flg = True
                         break
-                count += 1
-            if not break_flg:
-                if intersect_flg:
-                    hpts.append([z, parents_of_z])  # merge_hpts_with_z
+                    count += 1
+                if not break_flg:
+                    hypotheses_p.append([z, parents_of_z])  # merge_hpts_with_z
 
     """ проверка на асболютную каноничность """
     count = 0
-    while count < ex_idx:
+    while count < x_idx:
         v = u_set[count][0]
         # если пример вкладывается хотя бы в один из предыдущих примеров
-        if nesting(v, example[0]):
-            return hpts
+        if nesting(v, x[0]):
+            return 0
         count += 1
 
     """ если соблюдается абс. каноничность, то добавить пример ко множеству гипотез """
-    hpts.append(example)
-    return hpts
+    hypotheses_p.append(x)
 
 
 if __name__ == '__main__':
     """ извлечение примеров из файла """
     poisonous, edible = extract_data()
 
-    hypotheses_n = list()
+    hypotheses_p = list()
 
     """ основной цикл по (-)-примерам """
-    right_lim = 3
-    for x in poisonous[0:right_lim]:
-        hypotheses_n = add_h(x.copy(), poisonous.index(x), hypotheses_n, poisonous[0:right_lim])
-    write_to_file(hypotheses_n, 'res')
+    right_lim = 5
+    u_set = poisonous[0:right_lim]
+    t_begin = time.time()  # for time test
+    for x in u_set:
+        add_h()
+
+    print(f"dt = {time.time() - t_begin}")  # for time test
+    write_to_file(hypotheses_p, 'res')
