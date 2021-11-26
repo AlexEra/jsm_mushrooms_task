@@ -97,7 +97,10 @@ def add_h() -> int:
                     if count == 0 and hypotheses_p.index(y) == 0:
                         count += 1
                         continue
-                    if v[1][0] in y[1] or nesting(v[0], z):
+                    if v[1][0] in y[1]:
+                        break_flg = True
+                        break
+                    elif nesting(v[0], z):
                         break_flg = True
                         break
                     count += 1
